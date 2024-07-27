@@ -87,11 +87,11 @@ torch.manual_seed(69)
 model = Model()
 
 # Define loss function and optimizer
-criterion = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+criterion = nn.BCELoss()
+optimizer = optim.AdamW(model.parameters(), lr=0.001)
 
 # Training loop
-num_epochs = 1000
+num_epochs = 2500
 batch_size = 32
 
 for epoch in range(num_epochs):
