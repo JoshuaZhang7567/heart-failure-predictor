@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 import csv
+from sklearn.model_selection import train_test_split
+
 
 def format_sex(string):
     if string == 'M':
@@ -69,54 +70,80 @@ class Model(nn.Module):
         self.out = nn.Linear(h2, out_features)
 
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.out(x)
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        x = torch.sigmoid(self.out(x))  # Add sigmoid activation
         return x
-
-# Assuming read_data() function is defined as in your original code
 
 data_input, data_output = read_data()
 
-# Convert data to PyTorch tensors
 X = torch.FloatTensor(data_input)
-y = torch.FloatTensor(data_output)
+y = torch.FloatTensor(data_output).view(-1, 1)  # Reshape to [n_samples, 1]
 
-# Initialize the model
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1)
+
 torch.manual_seed(69)
 model = Model()
 
-# Define loss function and optimizer
-criterion = nn.BCELoss()
-optimizer = optim.AdamW(model.parameters(), lr=0.001)
+criterion = nn.BCELoss()  # Binary Cross Entropy Loss
+optimizer = optim.AdamW(model.parameters(), lr=0.0035)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.9)
 
-# Training loop
-num_epochs = 2500
-batch_size = 32
+num_epochs = 5000
+batch_size = 64
 
 for epoch in range(num_epochs):
+    model.train()
+    total_loss = 0
+    correct_predictions = 0
+    total_predictions = 0
+
     for i in range(0, len(X), batch_size):
-        batch_X = X[i:i+batch_size]
-        batch_y = y[i:i+batch_size]
+        batch_X = X_train[i:i+batch_size]
+        batch_y = y_train[i:i+batch_size]
         
-        # Forward pass
         outputs = model(batch_X)
         loss = criterion(outputs, batch_y)
         
-        # Backward pass and optimize
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
+        total_loss += loss.item()
+
+        # Calculate accuracy
+        predicted = (outputs > 0.5).float()
+        correct_predictions += (predicted == batch_y).sum().item()
+        total_predictions += batch_y.size(0)
     
+    epoch_loss = total_loss / (len(X) // batch_size)
+    epoch_accuracy = correct_predictions / total_predictions
+
     if (epoch + 1) % 100 == 0:
-        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, Accuracy: {epoch_accuracy:.4f}')
+
+    scheduler.step()
 
 print("Training completed!")
 
 # Test the model
 model.eval()
 with torch.no_grad():
-    for i in range(0,10):
-        test_input = torch.FloatTensor([data_input[i]])  # Example input
+    correct = 0
+    total = 0
+    for i in range(len(X_test)):
+        test_input = X_test[i].unsqueeze(0)  # Add batch dimension
         prediction = model(test_input)
-        print(f"Prediction for test input: {prediction.numpy()}")
+        predicted_class = 1 if prediction.item() > 0.5 else 0
+        actual_class = y_test[i].item()
+        
+        if predicted_class == actual_class:
+            correct += 1
+        total += 1
+        
+        if i < 10:  # Print first 10 predictions
+            print(f"Input: {test_input.numpy()}")
+            print(f"Prediction: {prediction.item():.4f}, Class: {predicted_class}, Actual: {actual_class}")
+            print()
+
+    print(f"Test Accuracy: {correct/total:.4f}")
