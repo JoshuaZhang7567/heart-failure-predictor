@@ -1,7 +1,7 @@
 ### **Heart Failure Predictor**
 
 A small machine learning project to predict the likelihood of heart failure using patient health data.
-Built with Python, pandas, scikit-learn, and TensorFlow.
+Built with Python and PyTorch.
 
 ### **Dataset**
 
@@ -31,8 +31,8 @@ python heart.py
 ```
 Skills Demonstrated:
 
-- Data cleaning and preprocessing with pandas
+- Data cleaning and preprocessing with numpy
 
-- Building and training a neural network with TensorFlow
+- Building and training a neural network with PyTorch
 
 - Model evaluation and prediction
