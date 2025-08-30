@@ -19,16 +19,16 @@ Evaluates the model’s performance on predicting heart failure
 ### **Usage**
 
 Clone the repo and install dependencies:
-
+```
 git clone https://github.com/JoshuaZhang7567/heart-failure-predictor.git
 cd heart-failure-predictor
 pip install -r requirements.txt
-
+```
 
 ### **Run the script:**
-
+```
 python heart.py
-
+```
 Skills Demonstrated:
 
 - Data cleaning and preprocessing with pandas
